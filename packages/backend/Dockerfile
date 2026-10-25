@@ -41,6 +41,12 @@ COPY --chown=node:node backstage.json ./
 # This switches many Node.js dependencies to production mode.
 ENV NODE_ENV=production
 
+# app-config.yaml reads ${GITHUB_TOKEN} (integrations.github). Backstage refuses
+# an empty string and hangs at startup when the variable is missing, so the
+# image carries a placeholder that does not authenticate. Nothing calls GitHub
+# at boot; the deploy overrides it with the real token (ADR-0016).
+ENV GITHUB_TOKEN=placeholder
+
 # Copy repo skeleton first, to avoid unnecessary docker cache invalidation.
 # The skeleton contains the package.json of each package in the monorepo,
 # and along with yarn.lock and the root package.json, that's enough to run yarn install.
@@ -57,4 +63,7 @@ COPY --chown=node:node examples ./examples
 COPY --chown=node:node packages/backend/dist/bundle.tar.gz app-config*.yaml ./
 RUN tar xzf bundle.tar.gz && rm bundle.tar.gz
 
-CMD ["node", "packages/backend", "--config", "app-config.yaml", "--config", "app-config.production.yaml"]
+# The production config (Postgres, ADR-0003/0010) is layered on at deploy
+# time. The image alone boots on SQLite (app-config.yaml) and answers
+# /.backstage/health/v1/readiness, which is what CI smokes (issue #1).
+CMD ["node", "packages/backend", "--config", "app-config.yaml"]
