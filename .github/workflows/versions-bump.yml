@@ -1,0 +1,35 @@
+name: versions-bump
+
+on:
+  schedule:
+    # 1º de cada mês, 03:17 UTC (fora do minuto cheio, concorrido).
+    - cron: "17 3 1 * *"
+  workflow_dispatch:
+
+permissions:
+  contents: write
+  pull-requests: write
+
+env:
+  COREPACK_ENABLE_DOWNLOAD_PROMPT: "0"
+
+jobs:
+  bump:
+    name: abre o PR mensal de versions:bump
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09 # v5
+      - uses: actions/setup-node@a0853c24544627f65ddf259abe73b1d18a591444 # v5
+        with:
+          node-version: 24
+      - run: corepack enable
+      - name: Instala dependências
+        run: yarn install --immutable
+      - name: Guarda a versão atual
+        run: echo "FROM_VERSION=$(node -p "require('./backstage.json').version")" >> "$GITHUB_ENV"
+      - name: backstage-cli versions:bump
+        run: yarn backstage-cli versions:bump --release line
+      - name: Abre o PR (se houver mudança)
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: bash scripts/versions-bump-pr.sh

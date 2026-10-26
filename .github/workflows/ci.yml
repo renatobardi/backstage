@@ -1,0 +1,124 @@
+name: CI
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+env:
+  COREPACK_ENABLE_DOWNLOAD_PROMPT: "0"
+
+jobs:
+  checks:
+    name: tipos, lint, testes e build
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09 # v5
+      - uses: actions/setup-node@a0853c24544627f65ddf259abe73b1d18a591444 # v5
+        with:
+          node-version: 24
+      - run: corepack enable
+      - name: Instala dependências
+        run: yarn install --immutable
+      - name: Tipos (tsc)
+        run: yarn tsc
+      - name: Lint
+        run: yarn lint:all
+      - name: Testes unitários
+        run: yarn test
+      - name: Build do backend
+        run: yarn build:backend
+      - name: Testes de composição e dos workflows
+        run: |
+          bash tests/composition.test.sh
+          bash tests/ci-workflows.test.sh
+          bash tests/versions-bump-pr.test.sh
+          bash tests/image-smoke.test.sh
+      - name: Readiness do backend (bundle em node)
+        run: bash tests/readiness.test.sh
+
+  image-pr:
+    name: imagem arm64 construída (PR, sem push)
+    needs: checks
+    if: github.event_name == 'pull_request'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09 # v5
+      - uses: actions/setup-node@a0853c24544627f65ddf259abe73b1d18a591444 # v5
+        with:
+          node-version: 24
+      - run: corepack enable
+      - name: Build do bundle do backend
+        run: |
+          yarn install --immutable
+          yarn tsc
+          yarn build:backend
+      - name: QEMU (build arm64 em runner amd64)
+        uses: docker/setup-qemu-action@c7c53464625b32c7a7e944ae62b3e17d2b600130 # v3
+        with:
+          platforms: arm64
+      - uses: docker/setup-buildx-action@8d2750c68a42422c14e847fe6c8ac0403b4cbd6f # v3
+      - name: Build do Dockerfile (sem push, carregado no daemon)
+        uses: docker/build-push-action@10e90e3645eae34f1e60eeb005ba3a3d33f178e8 # v6
+        with:
+          context: .
+          file: packages/backend/Dockerfile
+          platforms: linux/arm64
+          push: false
+          load: true
+          tags: ghcr.io/renatobardi/backstage:pr-check
+          cache-from: type=gha
+      - name: Smoke — readiness da imagem construída
+        run: bash scripts/image-smoke.sh ghcr.io/renatobardi/backstage:pr-check
+
+  image:
+    name: imagem arm64 no GHCR
+    needs: checks
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      packages: write
+    steps:
+      - uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09 # v5
+      - uses: actions/setup-node@a0853c24544627f65ddf259abe73b1d18a591444 # v5
+        with:
+          node-version: 24
+      - run: corepack enable
+      - name: Build do bundle do backend
+        run: |
+          yarn install --immutable
+          yarn tsc
+          yarn build:backend
+      - name: QEMU (build arm64 em runner amd64)
+        uses: docker/setup-qemu-action@c7c53464625b32c7a7e944ae62b3e17d2b600130 # v3
+        with:
+          platforms: arm64
+      - uses: docker/setup-buildx-action@8d2750c68a42422c14e847fe6c8ac0403b4cbd6f # v3
+      - name: Login no GHCR
+        uses: docker/login-action@c94ce9fb468520275223c153574b00df6fe4bcc9 # v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+      - name: Build e push da imagem arm64
+        uses: docker/build-push-action@10e90e3645eae34f1e60eeb005ba3a3d33f178e8 # v6
+        with:
+          context: .
+          file: packages/backend/Dockerfile
+          platforms: linux/arm64
+          push: true
+          tags: |
+            ghcr.io/renatobardi/backstage:latest
+            ghcr.io/renatobardi/backstage:sha-${{ github.sha }}
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+      - name: Smoke — readiness da imagem publicada
+        run: bash scripts/image-smoke.sh "ghcr.io/renatobardi/backstage:sha-${{ github.sha }}"
