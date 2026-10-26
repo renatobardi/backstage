@@ -53,6 +53,16 @@ assert_contains "$ci" "scripts/image-smoke.sh" "ci.yml roda o smoke da imagem pu
 assert_contains "$ci" "tests/readiness.test.sh" "ci.yml roda o teste de readiness do bundle"
 assert_contains "$ci" "tests/image-smoke.test.sh" "ci.yml roda o teste dos ramos do smoke"
 assert_contains "$ci" "tests/versions-bump-pr.test.sh" "ci.yml roda o teste dos ramos do bump"
+assert_contains "$ci" "push: false" "PR constrói a imagem sem push (prova antes do merge)"
+assert_contains "$ci" "image-pr:" "job de build da imagem no PR existe"
+
+# Actions por SHA completo de commit, com a tag em comentário (auditoria do PR #3).
+unpinned="$(grep -hE '^[[:space:]]*(- )?uses:' "$ci" "$bump" | grep -vE '@[0-9a-f]{40} # v[0-9]+' || true)"
+if [ -z "$unpinned" ]; then
+  ok "todas as actions pinadas por SHA completo, com a tag em comentário"
+else
+  fail "action sem SHA completo: $unpinned"
+fi
 
 # Critério 4: cron mensal (dia 1) e abertura de PR.
 assert_contains "$bump" "schedule:" "versions-bump.yml é agendado"
