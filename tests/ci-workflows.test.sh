@@ -77,6 +77,20 @@ else
   fail "o script do bump não cria PR"
 fi
 
+# O valor de --release tem que ser um dos aceitos pelo backstage-cli
+# versions:bump (cli-module-migrate 0.2.2, src/commands/versions/bump.ts): uma
+# versão semver, next, ou uma linha de release (main é o padrão). `line` não é
+# linha de release: o workflow falhou com "No 'line' release line found" (#1).
+release_re='^(next|main|[0-9]+\.[0-9]+\.[0-9]+)$'
+for f in "$bump" "$pr_script"; do
+  release="$(grep -oE -- '--release [A-Za-z0-9.]+' "$f" | head -1 | cut -d' ' -f2 || true)"
+  if echo "$release" | grep -qE -- "$release_re"; then
+    ok "$f: --release $release é valor aceito pelo backstage-cli"
+  else
+    fail "$f: --release '$release' não é versão, next nem main"
+  fi
+done
+
 # O campo cron tem 5 posições (min hora dia mês dia-da-semana); mensal =
 # dia do mês 1 e mês coringa.
 cron="$(grep -oE '"[0-9*/,-]+ [0-9*/,-]+ [0-9*/,-]+ [0-9*/,-]+ [0-9*/,-]+"' "$bump" | head -1 | tr -d '"')"
