@@ -91,6 +91,15 @@ for f in "$bump" "$pr_script"; do
   fi
 done
 
+# O step do versions:bump roda yarn install (dentro do CLI). Com CI=true o yarn
+# trava o lockfile (YN0028), então o step desliga a trava, e só ele.
+bump_step="$(awk '/name: backstage-cli versions:bump/ {f = 1} f && /^      - / && !/versions:bump/ {exit} f' "$bump")"
+if echo "$bump_step" | grep -qF "YARN_ENABLE_IMMUTABLE_INSTALLS: 'false'"; then
+  ok "step versions:bump desliga YARN_ENABLE_IMMUTABLE_INSTALLS"
+else
+  fail "step versions:bump sem YARN_ENABLE_IMMUTABLE_INSTALLS: 'false'"
+fi
+
 # O campo cron tem 5 posições (min hora dia mês dia-da-semana); mensal =
 # dia do mês 1 e mês coringa.
 cron="$(grep -oE '"[0-9*/,-]+ [0-9*/,-]+ [0-9*/,-]+ [0-9*/,-]+ [0-9*/,-]+"' "$bump" | head -1 | tr -d '"')"
