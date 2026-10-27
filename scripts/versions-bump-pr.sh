@@ -24,7 +24,7 @@ main() {
   cat >"$body" <<EOF
 Bump mensal das dependências \`@backstage/*\` (ADR-0001 em renatobardi/oute-infra-ops).
 
-- \`yarn backstage-cli versions:bump --release line\`: $from → $to.
+- \`yarn backstage-cli versions:bump --release main\`: $from → $to.
 - Diff de dependências: os arquivos deste PR.
 - Diff do template (Upgrade Helper), a aplicar antes de fazer merge:
   https://backstage.github.io/upgrade-helper/?from=$from&to=$to
