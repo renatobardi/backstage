@@ -33,6 +33,8 @@ jobs:
         run: yarn lint:all
       - name: Testes unitários
         run: yarn test
+      - name: Config de produção carrega e valida contra os schemas
+        run: yarn backstage-cli config:check --lax --config app-config.yaml --config app-config.production.yaml
       - name: Build do backend
         run: yarn build:backend
       - name: Testes de composição e dos workflows

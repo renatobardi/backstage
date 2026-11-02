@@ -1,55 +1,80 @@
+# Produção do oute (backstage-prd). Carregado junto com app-config.yaml:
+#   node packages/backend --config app-config.yaml --config app-config.production.yaml
+# Nenhum segredo aqui: tudo entra por env var ou arquivo montado pelo install (ADR-0002).
+# Listas (ex.: catalog.locations) substituem as do app-config.yaml, então os exemplos não entram.
+
 app:
-  # Should be the same as backend.baseUrl when using the `app-backend` plugin.
-  baseUrl: http://localhost:7007
+  baseUrl: https://backstage.oute.pro
 
 backend:
-  # Note that the baseUrl should be the URL that the browser and other clients
-  # should use when communicating with the backend, i.e. it needs to be
-  # reachable not just from within the backend host, but from all of your
-  # callers. When its value is "http://localhost:7007", it's strictly private
-  # and can't be reached by others.
-  baseUrl: http://localhost:7007
-  # The listener can also be expressed as a single <host>:<port> string. In this case we bind to
-  # all interfaces, the most permissive setting. The right value depends on your specific deployment.
+  baseUrl: https://backstage.oute.pro
   listen: ':7007'
+  cors:
+    origin: https://backstage.oute.pro
 
-  # config options: https://node-postgres.com/apis/client
+  # Automação (oute-infra-ops) lê o catálogo pelo listener da tailnet, com token próprio
+  # restrito a leitura do catálogo (ADR-0005).
+  auth:
+    externalAccess:
+      - type: static
+        options:
+          token: ${OUTE_INFRA_OPS_CATALOG_TOKEN}
+          subject: oute-infra-ops
+        accessRestrictions:
+          - plugin: catalog
+            permission:
+              - catalog.entity.read
+
+  # Schemas backstage_* no oute-supabase-db, database postgres (ADR-0003, ADR-0010).
   database:
     client: pg
+    pluginDivisionMode: schema
+    schemaPrefix: backstage_
     connection:
       host: ${POSTGRES_HOST}
       port: ${POSTGRES_PORT}
       user: ${POSTGRES_USER}
       password: ${POSTGRES_PASSWORD}
-      # https://node-postgres.com/features/ssl
-      # you can set the sslmode configuration option via the `PGSSLMODE` environment variable
-      # see https://www.postgresql.org/docs/current/libpq-ssl.html Table 33.1. SSL Mode Descriptions (e.g. require)
-      # ssl:
-      #   ca: # if you have a CA file and want to verify it you can uncomment this section
-      #     $file: <file-path>/ca/server.crt
+      database: postgres
 
+# Uma GitHub App (oute-backstage), instalada na conta renatobardi (ADR-0016).
+integrations:
+  github:
+    - host: github.com
+      apps:
+        - appId: ${GITHUB_APP_ID}
+          clientId: ${GITHUB_APP_CLIENT_ID}
+          clientSecret: ${GITHUB_APP_CLIENT_SECRET}
+          # PEM multilinha; o install grava entre aspas no .env do compose.
+          privateKey: ${GITHUB_APP_PRIVATE_KEY}
+          allowedInstallationOwners:
+            - renatobardi
+
+# Login só via oauth2-proxy + Google; exige User no oute-catalog com o email (ADR-0011, ADR-0017).
 auth:
+  environment: production
   providers:
-    guest: {}
+    oauth2Proxy:
+      signIn:
+        resolvers:
+          - resolver: emailMatchingUserEntityProfileEmail
 
 catalog:
-  # Overrides the default list locations from app-config.yaml as these contain example data.
-  # See https://backstage.io/docs/features/software-catalog/#adding-components-to-the-catalog for more details
-  # on how to get entities into the catalog.
   locations:
-    # Local example data, replace this with your production config, these are intended for demo use only.
-    # File locations are relative to the backend process, typically in a deployed context, such as in a Docker container, this will be the root
-    - type: file
-      target: ./examples/entities.yaml
-
-    # Local example template
-    - type: file
-      target: ./examples/template/template.yaml
+    # Org e infraestrutura (ADR-0002, ADR-0013): uma entidade por arquivo.
+    - type: url
+      target: https://github.com/renatobardi/oute-catalog/blob/main/entities/*/*.yaml
       rules:
-        - allow: [Template]
-
-    # Local example organizational data
-    - type: file
-      target: ./examples/org.yaml
-      rules:
-        - allow: [User, Group]
+        - allow: [User, Group, System, Component, Resource, Location]
+  providers:
+    # Apps: catalog-info.yaml de cada repo da conta renatobardi (ADR-0002).
+    github:
+      renatobardi:
+        organization: renatobardi
+        catalogPath: /catalog-info.yaml
+        filters:
+          allowForks: false
+          allowArchived: false
+        schedule:
+          frequency: { minutes: 30 }
+          timeout: { minutes: 3 }
