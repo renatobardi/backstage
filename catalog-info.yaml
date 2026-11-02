@@ -2,12 +2,11 @@ apiVersion: backstage.io/v1alpha1
 kind: Component
 metadata:
   name: backstage
-  description: An example of a Backstage application.
-  # Example for optional annotations
-  # annotations:
-  #   github.com/project-slug: backstage/backstage
-  #   backstage.io/techdocs-ref: dir:.
+  description: Backstage do oute, portal e catálogo do homelab (ADR-0001)
+  annotations:
+    github.com/project-slug: renatobardi/backstage
+  tags: [oute]
 spec:
   type: website
-  owner: john@example.com
-  lifecycle: experimental
+  owner: group:default/oute
+  lifecycle: production
