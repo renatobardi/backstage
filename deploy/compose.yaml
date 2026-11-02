@@ -1,0 +1,65 @@
+# Deploy do backstage-prd no oute-server (oute-infra-ops ADR-0010, ADR-0011).
+# Sem IP, porta, email ou segredo aqui: tudo vem do /opt/app/.env e do /opt/app/emails.txt
+# que o install grava (ADR-0006). Uso, de /opt/app no LXC:
+#   docker compose -f deploy/compose.yaml --env-file .env up -d
+#
+# Rede: só o oauth2-proxy (login Google) atende os humanos; o backend fica atrás dele.
+# A porta da API (BACKSTAGE_API_PUBLICAR) existe só para a automação com token (ADR-0005)
+# e NÃO pode ser alcançável por humanos: o provider oauth2Proxy confia nos headers
+# X-Forwarded-*. O firewall do LXC e o vhost da tailnet (só /api/catalog, headers limpos)
+# são do install, não daqui.
+name: backstage
+
+services:
+  backstage:
+    image: ghcr.io/renatobardi/backstage:${BACKSTAGE_TAG:-latest}
+    command:
+      - node
+      - packages/backend
+      - --config
+      - app-config.yaml
+      - --config
+      - app-config.production.yaml
+    env_file: ../.env
+    environment:
+      NODE_OPTIONS: --max-old-space-size=1536
+    ports:
+      - ${BACKSTAGE_API_PUBLICAR:?defina no .env}:7007
+    restart: unless-stopped
+    healthcheck:
+      test:
+        - CMD
+        - node
+        - -e
+        - "fetch('http://127.0.0.1:7007/.backstage/health/v1/readiness').then(r => process.exit(r.ok ? 0 : 1)).catch(() => process.exit(1))"
+      interval: 15s
+      timeout: 5s
+      retries: 5
+      start_period: 180s
+
+  oauth2-proxy:
+    image: quay.io/oauth2-proxy/oauth2-proxy:${OAUTH2_PROXY_TAG:-v7.15.4}
+    # Do .env: OAUTH2_PROXY_CLIENT_ID, OAUTH2_PROXY_CLIENT_SECRET, OAUTH2_PROXY_COOKIE_SECRET.
+    env_file: ../.env
+    environment:
+      OAUTH2_PROXY_PROVIDER: google
+      OAUTH2_PROXY_HTTP_ADDRESS: 0.0.0.0:4180
+      OAUTH2_PROXY_UPSTREAMS: http://backstage:7007
+      OAUTH2_PROXY_REDIRECT_URL: https://backstage.oute.pro/oauth2/callback
+      # Allowlist = emails dos User do oute-catalog (ADR-0017); o install gera o arquivo.
+      OAUTH2_PROXY_AUTHENTICATED_EMAILS_FILE: /etc/oauth2-proxy/emails.txt
+      OAUTH2_PROXY_REVERSE_PROXY: "true"
+      OAUTH2_PROXY_COOKIE_NAME: _oute_backstage
+      OAUTH2_PROXY_COOKIE_SECURE: "true"
+      OAUTH2_PROXY_COOKIE_SAMESITE: lax
+      OAUTH2_PROXY_SKIP_PROVIDER_BUTTON: "true"
+      # X-Forwarded-Email/User para o provider oauth2Proxy do Backstage.
+      OAUTH2_PROXY_PASS_USER_HEADERS: "true"
+    volumes:
+      - ../emails.txt:/etc/oauth2-proxy/emails.txt:ro
+    ports:
+      - ${BACKSTAGE_PUBLICAR:?defina no .env}:4180
+    depends_on:
+      backstage:
+        condition: service_healthy
+    restart: unless-stopped
