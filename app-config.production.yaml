@@ -72,6 +72,8 @@ catalog:
       renatobardi:
         organization: renatobardi
         catalogPath: /catalog-info.yaml
+        # Só cria a Location de repos que têm o catalog-info.yaml (sem Location vazia por repo).
+        validateLocationsExist: true
         filters:
           allowForks: false
           allowArchived: false
