@@ -15,6 +15,8 @@
   },
   "dependencies": {
     "@backstage-community/plugin-adr": "^0.32.0",
+    "@backstage-community/plugin-github-actions": "^1.6.0",
+    "@backstage-community/plugin-github-pull-requests-board": "^1.6.0",
     "@backstage-community/plugin-todo": "^0.26.0",
     "@backstage/cli": "^0.36.7",
     "@backstage/core-components": "^0.18.15",

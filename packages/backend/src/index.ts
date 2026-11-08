@@ -32,6 +32,9 @@ backend.add(import('@backstage/plugin-auth-backend-module-guest-provider'));
 backend.add(
   import('@backstage/plugin-auth-backend-module-oauth2-proxy-provider'),
 );
+// oute: token GitHub do usuário (OAuth do GitHub App oute-backstage) para os plugins
+// github-actions e pull-requests; não é login, quem entra continua sendo o oauth2-proxy.
+backend.add(import('@backstage/plugin-auth-backend-module-github-provider'));
 
 // catalog plugin
 backend.add(import('@backstage/plugin-catalog-backend'));
