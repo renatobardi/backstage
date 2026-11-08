@@ -66,6 +66,16 @@ auth:
         clientId: ${GITHUB_APP_CLIENT_ID}
         clientSecret: ${GITHUB_APP_CLIENT_SECRET}
 
+# Webhooks do GitHub App (oute-infra-ops ADR-0011): única rota sem login, só POST, só das
+# faixas `hooks` do GitHub (nginx), assinatura HMAC conferida aqui. Sem o segredo o módulo
+# aceitaria qualquer corpo; o compose exige a variável e não sobe sem ela.
+events:
+  http:
+    topics: [github]
+  modules:
+    github:
+      webhookSecret: ${GITHUB_APP_WEBHOOK_SECRET}
+
 # TechDocs gerado no próprio container: mkdocs vem da imagem (Dockerfile), sem Docker
 # dentro do LXC. Publicação local: os sites são regerados sob demanda após um restart.
 techdocs:
