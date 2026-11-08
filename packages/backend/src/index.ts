@@ -76,6 +76,8 @@ backend.add(import('@backstage/plugin-signals-backend'));
 backend.add(import('@backstage/plugin-devtools-backend'));
 backend.add(import('@backstage-community/plugin-todo-backend'));
 backend.add(import('@backstage-community/plugin-adr-backend'));
+// oute: lote 3b (ADR-0014): linguagens de cada Component, lidas da source location.
+backend.add(import('@backstage-community/plugin-linguist-backend'));
 
 // mcp actions plugin
 backend.add(import('@backstage/plugin-mcp-actions-backend'));
