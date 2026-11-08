@@ -58,6 +58,13 @@ auth:
       signIn:
         resolvers:
           - resolver: emailMatchingUserEntityProfileEmail
+    # Só token de usuário para github-actions e pull-requests (ADR-0014, lote 2), sem signIn:
+    # o login segue no oauth2-proxy. OAuth do GitHub App oute-backstage; callback
+    # https://backstage.oute.pro/api/auth/github/handler/frame cadastrada no App.
+    github:
+      production:
+        clientId: ${GITHUB_APP_CLIENT_ID}
+        clientSecret: ${GITHUB_APP_CLIENT_SECRET}
 
 catalog:
   locations:
