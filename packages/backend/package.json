@@ -33,6 +33,8 @@
     "@backstage/plugin-catalog-backend-module-logs": "^0.1.27",
     "@backstage/plugin-catalog-backend-module-scaffolder-entity-model": "^0.2.25",
     "@backstage/plugin-devtools-backend": "^0.5.22",
+    "@backstage/plugin-events-backend": "^0.6.7",
+    "@backstage/plugin-events-backend-module-github": "^0.4.17",
     "@backstage/plugin-mcp-actions-backend": "^0.2.3",
     "@backstage/plugin-notifications-backend": "^0.6.10",
     "@backstage/plugin-permission-backend": "^0.7.17",

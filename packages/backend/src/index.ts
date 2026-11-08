@@ -79,6 +79,12 @@ backend.add(import('@backstage-community/plugin-adr-backend'));
 // oute: lote 3b (ADR-0014): linguagens de cada Component, lidas da source location.
 backend.add(import('@backstage-community/plugin-linguist-backend'));
 
+// oute: webhooks do GitHub (oute-infra-ops ADR-0011, ADR-0014 lote 3c). Rota única sem
+// login: POST /api/events/http/github, HMAC X-Hub-Signature-256 conferido pelo módulo
+// github; o provider do catálogo assina os eventos e atualiza na hora (polling continua).
+backend.add(import('@backstage/plugin-events-backend'));
+backend.add(import('@backstage/plugin-events-backend-module-github'));
+
 // mcp actions plugin
 backend.add(import('@backstage/plugin-mcp-actions-backend'));
 

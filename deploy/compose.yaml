@@ -23,6 +23,9 @@ services:
     env_file: ../.env
     environment:
       NODE_OPTIONS: --max-old-space-size=1536
+      # Sem o segredo, o módulo de eventos aceitaria webhook sem assinatura (ADR-0011):
+      # o compose recusa subir em vez de abrir a rota.
+      GITHUB_APP_WEBHOOK_SECRET: ${GITHUB_APP_WEBHOOK_SECRET:?defina no .env (backstage-secrets --apply)}
     ports:
       - ${BACKSTAGE_API_PUBLICAR:?defina no .env}:7007
     restart: unless-stopped
@@ -55,6 +58,9 @@ services:
       OAUTH2_PROXY_SKIP_PROVIDER_BUTTON: "true"
       # X-Forwarded-Email/User para o provider oauth2Proxy do Backstage.
       OAUTH2_PROXY_PASS_USER_HEADERS: "true"
+      # A única rota sem login (ADR-0011): webhooks do GitHub, só POST e só esse caminho
+      # ($$ é o $ literal da regex: o compose interpola $).
+      OAUTH2_PROXY_SKIP_AUTH_ROUTES: "POST=^/api/events/http/github$$"
     volumes:
       - ../emails.txt:/etc/oauth2-proxy/emails.txt:ro
     ports:
