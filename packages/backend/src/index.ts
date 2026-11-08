@@ -47,10 +47,9 @@ backend.add(import('@backstage/plugin-catalog-backend-module-logs'));
 
 // permission plugin
 backend.add(import('@backstage/plugin-permission-backend'));
-// See https://backstage.io/docs/permissions/getting-started for how to create your own permission policy
-backend.add(
-  import('@backstage/plugin-permission-backend-module-allow-all-policy'),
-);
+// oute: RBAC da comunidade, política como config (oute-infra-ops ADR-0014, ADR-0017):
+// group:default/oute é super user; group:default/viewers só lê (rbac-policy.csv).
+backend.add(import('@backstage-community/plugin-rbac-backend'));
 
 // search plugin
 backend.add(import('@backstage/plugin-search-backend'));

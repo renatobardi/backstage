@@ -80,3 +80,19 @@ catalog:
         schedule:
           frequency: { minutes: 30 }
           timeout: { minutes: 3 }
+
+# RBAC (oute-infra-ops ADR-0017): dois papéis, a política nomeia grupos, nunca pessoas.
+# admin = group:default/oute (super user: tudo); viewer = group:default/viewers (rbac-policy.csv).
+# Convidar alguém é um PR no oute-catalog (User membro de viewers); este arquivo não muda.
+permission:
+  enabled: true
+  rbac:
+    policies-csv-file: ./rbac-policy.csv
+    policyFileReload: true
+    pluginsWithPermission:
+      - catalog
+      - scaffolder
+      - permission
+    admin:
+      superUsers:
+        - name: group:default/oute
