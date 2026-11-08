@@ -61,6 +61,8 @@ COPY --chown=node:node examples ./examples
 
 # Then copy the rest of the backend bundle, along with any other files we might want.
 COPY --chown=node:node packages/backend/dist/bundle.tar.gz app-config*.yaml ./
+# oute: política RBAC (ADR-0017), lida pelo plugin-rbac-backend.
+COPY --chown=node:node rbac-policy.csv ./
 RUN tar xzf bundle.tar.gz && rm bundle.tar.gz
 
 # The production config (Postgres, ADR-0003/0010) is layered on at deploy
