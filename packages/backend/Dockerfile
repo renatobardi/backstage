@@ -22,8 +22,14 @@ FROM node:24-trixie-slim
 RUN --mount=type=cache,target=/var/cache/apt,sharing=locked \
     --mount=type=cache,target=/var/lib/apt,sharing=locked \
     apt-get update && \
-    apt-get install -y --no-install-recommends libsqlite3-dev && \
+    apt-get install -y --no-install-recommends libsqlite3-dev python3 python3-venv && \
     rm -rf /var/lib/apt/lists/*
+
+# oute: TechDocs com builder e gerador locais (ADR-0014): mkdocs num venv da imagem,
+# versão fixa (sobe junto no versions:bump quando a techdocs-core mudar).
+RUN python3 -m venv /opt/mkdocs && \
+    /opt/mkdocs/bin/pip install --no-cache-dir mkdocs-techdocs-core==1.7.1
+ENV PATH="/opt/mkdocs/bin:${PATH}"
 
 # From here on we use the least-privileged `node` user to run the backend.
 USER node
