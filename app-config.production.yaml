@@ -66,6 +66,15 @@ auth:
         clientId: ${GITHUB_APP_CLIENT_ID}
         clientSecret: ${GITHUB_APP_CLIENT_SECRET}
 
+# TechDocs gerado no próprio container: mkdocs vem da imagem (Dockerfile), sem Docker
+# dentro do LXC. Publicação local: os sites são regerados sob demanda após um restart.
+techdocs:
+  builder: local
+  generator:
+    runIn: local
+  publisher:
+    type: local
+
 catalog:
   locations:
     # Org e infraestrutura (ADR-0002, ADR-0013): uma entidade por arquivo.
