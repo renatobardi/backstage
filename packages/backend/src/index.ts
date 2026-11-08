@@ -69,6 +69,11 @@ backend.add(import('@backstage/plugin-user-settings-backend'));
 backend.add(import('@backstage/plugin-notifications-backend'));
 backend.add(import('@backstage/plugin-signals-backend'));
 
+// oute: lote 1 de plugins (oute-infra-ops ADR-0014)
+backend.add(import('@backstage/plugin-devtools-backend'));
+backend.add(import('@backstage-community/plugin-todo-backend'));
+backend.add(import('@backstage-community/plugin-adr-backend'));
+
 // mcp actions plugin
 backend.add(import('@backstage/plugin-mcp-actions-backend'));
 
