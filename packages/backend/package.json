@@ -17,6 +17,7 @@
   },
   "dependencies": {
     "@backstage-community/plugin-adr-backend": "^0.27.0",
+    "@backstage-community/plugin-linguist-backend": "^0.33.0",
     "@backstage-community/plugin-rbac-backend": "^8.1.8",
     "@backstage-community/plugin-todo-backend": "^0.27.0",
     "@backstage/backend-defaults": "^0.18.1",

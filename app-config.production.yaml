@@ -75,6 +75,18 @@ techdocs:
   publisher:
     type: local
 
+# Linguist (ADR-0014, lote 3b): baixa o repo da source location de cada Component e conta
+# as linguagens. Poucos por vez e de hora em hora, para caber nos 2.5 GiB do LXC (ADR-0010).
+linguist:
+  schedule:
+    frequency: { hours: 1 }
+    timeout: { minutes: 10 }
+    initialDelay: { minutes: 5 }
+  age: { days: 30 }
+  batchSize: 2
+  kind: [Component]
+  useSourceLocation: true
+
 catalog:
   locations:
     # Org e infraestrutura (ADR-0002, ADR-0013): uma entidade por arquivo.

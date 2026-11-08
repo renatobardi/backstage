@@ -19,6 +19,12 @@ app:
     # Visit data is stored via UserSettings storage if available, otherwise browser localStorage.
     # - api:home/visits: true
     # - app-root-element:home/visit-listener: true
+    # oute: card de linguagens em todo Component (o backend usa a source location,
+    # useSourceLocation em app-config.production.yaml), sem anotar repo por repo.
+    - entity-card:linguist/languages:
+        config:
+          filter:
+            kind: component
     - home-page-widget:home/toolkit:
         config:
           tools:
