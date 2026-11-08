@@ -218,6 +218,11 @@ catalog:
 permission:
   # setting this to `false` will disable permissions
   enabled: true
+  # oute: local dev signs in as guest, who has no User entity; RBAC would deny it everything.
+  rbac:
+    admin:
+      superUsers:
+        - name: user:development/guest
 
 # see https://backstage.io/docs/ai/mcp-actions for more details
 mcpActions:

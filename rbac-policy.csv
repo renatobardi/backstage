@@ -1,0 +1,3 @@
+g, group:default/viewers, role:default/viewer
+p, role:default/viewer, catalog-entity, read, allow
+p, role:default/viewer, catalog.location.read, read, allow
